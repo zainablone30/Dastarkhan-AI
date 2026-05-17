@@ -73,7 +73,7 @@ export default function SignupPage() {
     setError("")
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard/profile/setup` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/profile/setup` },
     })
     if (error) {
       setError(error.message)
