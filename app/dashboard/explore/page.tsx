@@ -101,6 +101,10 @@ function ExplorePageInner() {
     fetchFoods()
   }, [])
 
+  useEffect(() => {
+    setSearchQuery(searchParams.get("search") || "")
+  }, [searchParams])
+
   const filteredFoods = allFoods
     .filter((food) => {
       const matchesSearch =

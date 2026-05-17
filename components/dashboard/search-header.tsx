@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import { Search, MapPin, Bell, ShoppingBag, Mic, X } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
@@ -26,9 +27,14 @@ export function SearchHeader({
   cartCount = 0,
   notificationCount = 2,
 }: SearchHeaderProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [speechSupported, setSpeechSupported] = useState(false)
+  const speechRef = useRef<any>(null)
 
   const greetings = [
     t("search_greeting_1", { name: userName }),
@@ -58,6 +64,77 @@ export function SearchHeader({
     locationStatus === "blocked"
       ? "Location permission is blocked. Enable it in your browser settings, then try again."
       : "Use your current location"
+
+  function submitSearch(query: string) {
+    const cleaned = query.trim()
+    if (!cleaned) return
+    const target = `/dashboard/explore?search=${encodeURIComponent(cleaned)}`
+
+    if (pathname !== "/dashboard/explore") {
+      router.push(target)
+    } else {
+      router.replace(target)
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+    if (!SpeechRecognition) return
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = navigator.language || "en-US"
+    recognition.interimResults = true
+    recognition.maxAlternatives = 1
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0]?.transcript || "")
+        .join(" ")
+        .trim()
+
+      if (transcript) {
+        setSearchQuery(transcript)
+
+        const last = event.results[event.results.length - 1]
+        if (last?.isFinal) {
+          submitSearch(transcript)
+        }
+      }
+    }
+
+    recognition.onend = () => setIsListening(false)
+    recognition.onerror = () => setIsListening(false)
+
+    speechRef.current = recognition
+    setSpeechSupported(true)
+
+    return () => {
+      try {
+        recognition.abort()
+      } catch {
+        // Ignore cleanup errors from unsupported implementations.
+      }
+    }
+  }, [])
+
+  const toggleVoiceSearch = () => {
+    if (!speechSupported || !speechRef.current) return
+
+    if (isListening) {
+      speechRef.current.stop()
+      return
+    }
+
+    try {
+      setIsListening(true)
+      speechRef.current.start()
+    } catch {
+      setIsListening(false)
+    }
+  }
 
   return (
     <div className="sticky top-14 z-30 border-b border-border/50 bg-background/85 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4 lg:top-0">
@@ -132,6 +209,12 @@ export function SearchHeader({
             placeholder={t("search_placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                submitSearch(searchQuery)
+              }
+            }}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
             className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground sm:text-base"
@@ -144,7 +227,17 @@ export function SearchHeader({
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
           )}
-          <button className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+          <button
+            type="button"
+            onClick={toggleVoiceSearch}
+            title={speechSupported ? "Voice search" : "Voice search not supported"}
+            className={`p-2 rounded-xl transition-colors ${
+              isListening
+                ? "bg-primary text-primary-foreground"
+                : "bg-primary/10 text-primary hover:bg-primary/20"
+            } ${!speechSupported ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={!speechSupported}
+          >
             <Mic className="w-5 h-5" />
           </button>
         </motion.div>
@@ -165,7 +258,10 @@ export function SearchHeader({
                 {quickSearches.map((item) => (
                   <button
                     key={item}
-                    onClick={() => setSearchQuery(item)}
+                    onClick={() => {
+                      setSearchQuery(item)
+                      submitSearch(item)
+                    }}
                     className="px-4 py-2 rounded-full bg-muted hover:bg-primary/10 hover:text-primary text-sm font-medium transition-colors"
                   >
                     {item}

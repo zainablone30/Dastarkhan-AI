@@ -86,6 +86,8 @@ export default function DashboardPage() {
   const [cartCount, setCartCount] = useState(2)
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState("Foodie")
+  const [userId, setUserId] = useState<string | null>(null)
+  const [notificationCount, setNotificationCount] = useState(0)
   const [currentLocation, setCurrentLocation] = useState("")
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle")
   const [trendingFoods, setTrendingFoods] = useState<FoodItem[]>([])
@@ -149,6 +151,7 @@ export default function DashboardPage() {
         router.replace("/login")
         return
       }
+      setUserId(session.user.id)
       // Get user name from profile
       supabase
         .from("profiles")
@@ -160,6 +163,39 @@ export default function DashboardPage() {
         })
     })
   }, [router])
+
+  useEffect(() => {
+    if (!userId) return
+
+    let isMounted = true
+
+    const loadNotificationCount = async () => {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+
+      if (!error && isMounted) {
+        setNotificationCount(count ?? 0)
+      }
+    }
+
+    loadNotificationCount()
+
+    const ch = supabase
+      .channel("notifications-count")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => loadNotificationCount(),
+      )
+      .subscribe()
+
+    return () => {
+      isMounted = false
+      supabase.removeChannel(ch)
+    }
+  }, [userId])
 
   useEffect(() => {
     const stopWatchingLocation = detectCurrentLocation()
@@ -202,7 +238,7 @@ export default function DashboardPage() {
           locationStatus={locationStatus}
           onLocationClick={detectCurrentLocation}
           cartCount={cartCount}
-          notificationCount={3}
+          notificationCount={notificationCount}
         />
 
         <div className="space-y-5 px-4 py-4 sm:px-6 lg:space-y-6 lg:pt-6">
