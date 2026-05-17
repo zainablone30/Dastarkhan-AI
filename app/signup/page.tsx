@@ -71,9 +71,12 @@ export default function SignupPage() {
   const handleGoogleSignup = async () => {
     setIsLoading(true)
     setError("")
+    const redirectBase = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    const redirectUrl = new URL("/auth/callback", redirectBase)
+    redirectUrl.searchParams.set("next", "/dashboard/profile/setup")
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/profile/setup` },
+      options: { redirectTo: redirectUrl.toString() },
     })
     if (error) {
       setError(error.message)
