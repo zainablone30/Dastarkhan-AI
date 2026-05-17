@@ -32,6 +32,47 @@ export function DashboardSidebar() {
   const router = useRouter()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
+  const handleCuisineGpsClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    setIsMobileOpen(false)
+
+    if (typeof window === "undefined") {
+      router.push("/dashboard/cuisinegps")
+      return
+    }
+
+    const storage = window.sessionStorage
+    storage.removeItem("cuisinegps_permission")
+    storage.removeItem("cuisinegps_coords")
+
+    if (!navigator.geolocation) {
+      storage.setItem("cuisinegps_permission", "unsupported")
+      router.push("/dashboard/cuisinegps")
+      return
+    }
+
+    storage.setItem("cuisinegps_permission", "requested")
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        storage.setItem("cuisinegps_permission", "granted")
+        storage.setItem(
+          "cuisinegps_coords",
+          JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        )
+        router.push("/dashboard/cuisinegps")
+      },
+      (error) => {
+        storage.setItem(
+          "cuisinegps_permission",
+          error.code === error.PERMISSION_DENIED ? "denied" : "error",
+        )
+        router.push("/dashboard/cuisinegps")
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    )
+  }
+
   const mainNavItems = [
     { icon: Home, label: t("sidebar_home"), href: "/dashboard" },
     { icon: Search, label: t("sidebar_explore"), href: "/dashboard/explore" },
@@ -110,17 +151,41 @@ export function DashboardSidebar() {
           </p>
           {aiFeatures.map((item) => {
             const isActive = pathname === item.href
+            const className = cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )
+
+            if (item.href === "/dashboard/cuisinegps") {
+              return (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={handleCuisineGpsClick}
+                  className={className}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                  <span
+                    className={cn(
+                      "ml-auto text-[10px] px-2 py-0.5 rounded-full font-medium",
+                      isActive ? "bg-white/20 text-white" : "bg-accent/10 text-accent"
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                </button>
+              )
+            }
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
+                className={className}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
