@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { Sparkles, Heart, Stethoscope, Globe, ChefHat, ArrowRight } from "lucide-react"
 import { PinguChef } from "@/components/pingu-chef"
@@ -9,24 +10,28 @@ import { useLanguage } from "@/components/language-provider"
 const aiModesMeta = [
   {
     id: "medimenu",
+    href: "/dashboard/medimenu",
     icon: Stethoscope,
     color: "from-green-500 to-emerald-600",
     bgColor: "bg-green-500/10",
   },
   {
     id: "cuisinegps",
+    href: "/dashboard/cuisinegps",
     icon: Globe,
     color: "from-blue-500 to-indigo-600",
     bgColor: "bg-blue-500/10",
   },
   {
     id: "tasteofpakistan",
+    href: "/dashboard/taste-pakistan",
     icon: Heart,
     color: "from-orange-500 to-red-600",
     bgColor: "bg-orange-500/10",
   },
   {
     id: "smartkitchen",
+    href: "/dashboard/smart-kitchen",
     icon: ChefHat,
     color: "from-purple-500 to-pink-600",
     bgColor: "bg-purple-500/10",
@@ -35,6 +40,7 @@ const aiModesMeta = [
 
 export function AISuggestions() {
   const { t } = useLanguage()
+  const router = useRouter()
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -76,7 +82,7 @@ export function AISuggestions() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              onClick={() => setSelectedMode(isSelected ? null : mode.id)}
+              onClick={() => router.push(mode.href)}
               className={`relative p-4 rounded-2xl border-2 transition-all duration-300 text-left ${
                 isSelected
                   ? `bg-gradient-to-br ${mode.color} border-transparent text-white`
@@ -135,7 +141,10 @@ export function AISuggestions() {
                       </span>
                     ))}
                   </div>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-foreground font-semibold text-sm hover:bg-white/90 transition-colors">
+                  <button
+                    onClick={() => router.push(currentMode.href)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-foreground font-semibold text-sm hover:bg-white/90 transition-colors"
+                  >
                     {t("ai_start")} <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
