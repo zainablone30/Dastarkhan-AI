@@ -131,12 +131,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }))
 
         // Build payload using only columns confirmed in the actual DB schema
-        const orderNumber = `DK-${Date.now().toString(36).toUpperCase()}`
         const payload: Record<string, unknown> = {
-          order_number: orderNumber,
           items: orderItems,
           status: "pending",
+          restaurant_name: restaurantName,
           total,
+          subtotal,
+          delivery_fee: deliveryFee,
           restaurant_area: restaurantArea,
           restaurant_lat: restaurantCoords.lat,
           restaurant_lng: restaurantCoords.lng,
@@ -157,9 +158,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // PGRST204 = column not found → fall back to bare minimum
         if (error?.code === "PGRST204") {
           const minPayload: Record<string, unknown> = {
-            order_number: orderNumber,
             items: orderItems,
             status: "pending",
+            restaurant_name: restaurantName,
             total,
           }
           if (session?.user?.id) minPayload.user_id = session.user.id
