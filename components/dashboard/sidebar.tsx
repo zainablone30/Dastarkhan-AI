@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import { PinguChef } from "@/components/pingu-chef"
 import { supabase } from "@/lib/supabase"
 import { useLanguage } from "@/components/language-provider"
+import { useUnreadCount } from "@/lib/use-notifications"
 
 export function DashboardSidebar() {
   const { t } = useLanguage()
@@ -79,6 +80,7 @@ export function DashboardSidebar() {
     { icon: Sparkles, label: t("sidebar_ai_suggest"), href: "/dashboard/ai-suggest" },
     { icon: Heart, label: t("sidebar_favorites"), href: "/dashboard/favorites" },
     { icon: ShoppingBag, label: t("sidebar_orders"), href: "/dashboard/orders" },
+    { icon: Bell, label: "Notifications", href: "/dashboard/notifications" },
   ]
 
   const aiFeatures = [
@@ -98,12 +100,14 @@ export function DashboardSidebar() {
     router.replace("/login")
   }
 
+  const { count: unreadCount } = useUnreadCount()
+
   const NavContent = () => (
     <>
       {/* Logo */}
       <div className="p-6 border-b border-border/50">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center">
             <ChefHat className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -120,6 +124,7 @@ export function DashboardSidebar() {
         </p>
         {mainNavItems.map((item) => {
           const isActive = pathname === item.href
+          const isBell = item.href === "/dashboard/notifications"
           return (
             <Link
               key={item.href}
@@ -132,8 +137,20 @@ export function DashboardSidebar() {
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <item.icon className="w-5 h-5" />
+              <span className="relative">
+                <item.icon className="w-5 h-5" />
+                {isBell && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
               <span className="font-medium">{item.label}</span>
+              {isBell && unreadCount > 0 && !isActive && (
+                <span className="ml-auto rounded-full bg-red-500 text-white text-[10px] font-bold px-2 py-0.5">
+                  {unreadCount}
+                </span>
+              )}
               {isActive && (
                 <motion.div
                   layoutId="activeIndicator"
@@ -204,7 +221,7 @@ export function DashboardSidebar() {
       </nav>
 
       {/* Pingu Chef Mini */}
-      <div className="p-4 mx-4 mb-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+      <div className="p-4 mx-4 mb-4 rounded-2xl bg-linear-to-br from-primary/10 to-accent/10 border border-primary/20">
         <div className="flex items-center gap-3">
           <PinguChef size="sm" showQuote={false} />
           <div>
@@ -252,15 +269,20 @@ export function DashboardSidebar() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-accent flex items-center justify-center">
             <ChefHat className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-foreground">DastarKhan</span>
         </Link>
         <div className="flex items-center gap-2">
-          <button className="p-2 rounded-xl bg-muted">
+          <Link href="/dashboard/notifications" className="relative p-2 rounded-xl bg-muted">
             <Bell className="w-5 h-5 text-muted-foreground" />
-          </button>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
           <button
             onClick={() => setIsMobileOpen(!isMobileOpen)}
             className="p-2 rounded-xl bg-muted"

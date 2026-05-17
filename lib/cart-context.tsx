@@ -31,6 +31,8 @@ type CartContextType = {
   placeOrder: (customerLat?: number, customerLng?: number) => Promise<string | null>
   isPlacingOrder: boolean
   lastOrderId: string | null
+  orderError: string | null
+  clearOrderError: () => void
 }
 
 const CartContext = createContext<CartContextType | null>(null)
@@ -45,6 +47,7 @@ const NOOP_CART: CartContextType = {
   subtotal: 0, deliveryFee: 0, total: 0,
   placeOrder: async () => null,
   isPlacingOrder: false, lastOrderId: null,
+  orderError: null, clearOrderError: () => {},
 }
 
 /** Safe to call outside CartProvider — returns no-ops so FoodCard works anywhere. */
@@ -57,6 +60,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [lastOrderId, setLastOrderId] = useState<string | null>(null)
+  const [orderError, setOrderError] = useState<string | null>(null)
 
   // Hydrate from localStorage once on mount
   useEffect(() => {
@@ -115,12 +119,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     async (customerLat?: number, customerLng?: number): Promise<string | null> => {
       if (items.length === 0) return null
       setIsPlacingOrder(true)
+      setOrderError(null)
       try {
         const { data: { session } } = await supabase.auth.getSession()
 
+        if (!session?.user?.id) {
+          setOrderError("Order place karne ke liye pehle login karo.")
+          return null
+        }
+
         const restaurantCoords = getAreaCoordinates(restaurantArea)
 
-        // Store restaurant_name inside each item — the orders table has no restaurant_name column
         const orderItems = items.map(i => ({
           food_id: i.foodId,
           name: i.name,
@@ -130,8 +139,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           restaurant_name: i.restaurantName,
         }))
 
-        // Build payload using only columns confirmed in the actual DB schema
-        const payload: Record<string, unknown> = {
+        // Full payload — includes optional columns that may or may not exist
+        const fullPayload: Record<string, unknown> = {
+          user_id: session.user.id,
           items: orderItems,
           status: "pending",
           restaurant_name: restaurantName,
@@ -143,41 +153,60 @@ export function CartProvider({ children }: { children: ReactNode }) {
           restaurant_lng: restaurantCoords.lng,
           estimated_minutes: 30,
         }
-
-        // user_id is uuid type in DB — only include for authenticated users
-        if (session?.user?.id) payload.user_id = session.user.id
-        if (customerLat != null) payload.customer_lat = customerLat
-        if (customerLng != null) payload.customer_lng = customerLng
+        if (customerLat != null) fullPayload.customer_lat = customerLat
+        if (customerLng != null) fullPayload.customer_lng = customerLng
 
         let { data, error } = await supabase
           .from("orders")
-          .insert(payload)
+          .insert(fullPayload)
           .select("id")
           .single()
 
-        // PGRST204 = column not found → fall back to bare minimum
+        // PGRST204 = column not found in schema cache → retry without optional extra columns
         if (error?.code === "PGRST204") {
-          const minPayload: Record<string, unknown> = {
+          const reducedPayload: Record<string, unknown> = {
+            user_id: session.user.id,
             items: orderItems,
             status: "pending",
-            restaurant_name: restaurantName,
             total,
+            restaurant_area: restaurantArea,
+            restaurant_lat: restaurantCoords.lat,
+            restaurant_lng: restaurantCoords.lng,
+            estimated_minutes: 30,
           }
-          if (session?.user?.id) minPayload.user_id = session.user.id
+          if (customerLat != null) reducedPayload.customer_lat = customerLat
+          if (customerLng != null) reducedPayload.customer_lng = customerLng
           ;({ data, error } = await supabase
             .from("orders")
-            .insert(minPayload)
+            .insert(reducedPayload)
             .select("id")
             .single())
         }
 
-        if (error) throw error
+        // Second PGRST204 → try absolute minimum
+        if (error?.code === "PGRST204") {
+          ;({ data, error } = await supabase
+            .from("orders")
+            .insert({ user_id: session.user.id, items: orderItems, total, status: "pending" })
+            .select("id")
+            .single())
+        }
+
+        if (error || !data) {
+          const msg = (error as any)?.message || "Order place nahi hua. Dobara try karo."
+          console.error("Order placement failed:", error)
+          setOrderError(msg)
+          return null
+        }
+
         const orderId: string = data.id
         setLastOrderId(orderId)
         clearCart()
         return orderId
       } catch (err) {
+        const msg = err instanceof Error ? err.message : "Order place nahi hua. Dobara try karo."
         console.error("Order placement failed:", err)
+        setOrderError(msg)
         return null
       } finally {
         setIsPlacingOrder(false)
@@ -205,6 +234,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         placeOrder,
         isPlacingOrder,
         lastOrderId,
+        orderError,
+        clearOrderError: () => setOrderError(null),
       }}
     >
       {children}

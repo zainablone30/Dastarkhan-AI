@@ -547,7 +547,7 @@ export default function PinguChatbot() {
             </AnimatePresence>
 
             {/* Character with gesture wrapper */}
-            <motion.div className="h-full w-full" animate={getGesture(phase)}>
+            <motion.div className="h-full w-full" animate={getGesture(phase) as any}>
               <PinguCompanion mood={mood} />
             </motion.div>
           </motion.div>

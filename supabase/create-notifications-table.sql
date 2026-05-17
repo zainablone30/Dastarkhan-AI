@@ -36,7 +36,7 @@ CREATE POLICY "notifications_delete_own" ON public.notifications
 
 -- 3. Trigger for order status changes
 CREATE OR REPLACE FUNCTION public.insert_order_notification()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   n_title text;
   n_detail text;
