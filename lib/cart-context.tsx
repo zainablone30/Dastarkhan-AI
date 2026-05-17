@@ -39,6 +39,20 @@ const CartContext = createContext<CartContextType | null>(null)
 const DELIVERY_FEE = 50
 const STORAGE_KEY = "dk-cart"
 
+/** Generate a human-friendly order number like `DK-260518-A7K3F`.
+ *  - DK = DastarKhan prefix
+ *  - YYMMDD = today's date
+ *  - 5-char random base36 suffix for uniqueness
+ */
+function generateOrderNumber(): string {
+  const d = new Date()
+  const yy = String(d.getFullYear()).slice(-2)
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  const rand = Math.random().toString(36).slice(2, 7).toUpperCase()
+  return `DK-${yy}${mm}${dd}-${rand}`
+}
+
 const NOOP_CART: CartContextType = {
   items: [], restaurantName: "", restaurantArea: "",
   isOpen: false,
@@ -139,9 +153,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
           restaurant_name: i.restaurantName,
         }))
 
+        // Generate a human-friendly order number (table has NOT NULL constraint)
+        const orderNumber = generateOrderNumber()
+
         // Full payload — includes optional columns that may or may not exist
         const fullPayload: Record<string, unknown> = {
           user_id: session.user.id,
+          order_number: orderNumber,
           items: orderItems,
           status: "pending",
           restaurant_name: restaurantName,
@@ -162,10 +180,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           .select("id")
           .single()
 
-        // PGRST204 = column not found in schema cache → retry without optional extra columns
+        // PGRST204 = column not found in schema cache → retry without optional extras
         if (error?.code === "PGRST204") {
           const reducedPayload: Record<string, unknown> = {
             user_id: session.user.id,
+            order_number: orderNumber,
             items: orderItems,
             status: "pending",
             total,
@@ -183,11 +202,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
             .single())
         }
 
-        // Second PGRST204 → try absolute minimum
+        // Second PGRST204 → try absolute minimum (still keep order_number — it's NOT NULL)
         if (error?.code === "PGRST204") {
           ;({ data, error } = await supabase
             .from("orders")
-            .insert({ user_id: session.user.id, items: orderItems, total, status: "pending" })
+            .insert({
+              user_id: session.user.id,
+              order_number: orderNumber,
+              items: orderItems,
+              total,
+              status: "pending",
+            })
             .select("id")
             .single())
         }
