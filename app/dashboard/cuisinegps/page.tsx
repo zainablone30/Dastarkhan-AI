@@ -61,7 +61,7 @@ export default function CuisineGPSPage() {
     setLocationRequested(true)
     if (!navigator.geolocation) {
       setLocationStatus("error")
-      setLocationError("Location not supported.")
+      setLocationError("Location not supported. ")
       return
     }
 
