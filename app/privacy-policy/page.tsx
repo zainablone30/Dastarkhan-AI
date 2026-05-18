@@ -40,7 +40,7 @@ export default function PrivacyPolicyPage() {
               Welcome to DastarKhan AI ("we," "our," or "us"). We are Pakistan's first AI-powered food platform,
               connecting health-conscious customers with home chefs across Lahore, Karachi, and Islamabad.
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when
-              you use our website and mobile application (collectively, the "Platform").
+              you use our website and mobile application (collectively,  the "Platform").
             </p>
           </section>
 
