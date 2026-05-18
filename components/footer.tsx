@@ -20,10 +20,10 @@ const footerLinks = {
     { label: "Live Chat", href: "#" },
   ],
   legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "Cookie Policy", href: "#" },
-    { label: "Refund Policy", href: "#" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
+    { label: "Terms of Service", href: "/terms-of-service" },
+    { label: "Cookie Policy", href: "/cookie-policy" },
+    { label: "Refund Policy", href: "/refund-policy" },
   ],
 }
 
@@ -203,18 +203,18 @@ export function Footer() {
                 ✅ Subscribed! Health tips aate rahenge.
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex gap-2">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
-                  className="px-4 py-3 bg-background/10 rounded-xl text-background placeholder:text-background/50 outline-none focus:ring-2 focus:ring-primary w-64"
+                  className="px-4 py-3 bg-background/10 rounded-xl text-background placeholder:text-background/50 outline-none focus:ring-2 focus:ring-primary w-full sm:w-64"
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+                  className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
                 >
                   Subscribe
                 </button>

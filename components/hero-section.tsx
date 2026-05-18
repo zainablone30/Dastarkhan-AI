@@ -101,6 +101,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
             <motion.button
               whileHover={{ scale: 1.03, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
               whileTap={{ scale: 0.97 }}
+              onClick={() => document.getElementById("chefs")?.scrollIntoView({ behavior: "smooth" })}
               className="flex w-full max-w-xs items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 text-base font-semibold text-white backdrop-blur-md transition-all sm:w-auto sm:max-w-none sm:px-8 sm:text-lg"
             >
               <Utensils className="w-5 h-5" />

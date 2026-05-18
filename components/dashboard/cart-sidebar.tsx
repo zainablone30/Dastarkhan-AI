@@ -123,7 +123,7 @@ function PaymentOverlay({
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Recipient</p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold text-foreground text-sm">ABDULLAH NASIR</p>
+              <p className="font-bold text-foreground text-sm">DastarKhan</p>
               <p className="text-xs text-muted-foreground font-mono mt-0.5">MSISDN: *******3395</p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -139,7 +139,7 @@ function PaymentOverlay({
           </p>
           <ol className="space-y-1.5 text-xs text-amber-700 dark:text-amber-300 list-decimal list-inside">
             <li>Upar diye gaye QR code ko scan karein</li>
-            <li>Rs. {total} send karein ABDULLAH NASIR ko</li>
+            <li>Rs. {total} DastarKhan ke Easypaisa pe send karein</li>
             <li>Payment ka screenshot lein</li>
             <li>Screenshot hamare admin ko bhejein</li>
           </ol>

@@ -200,7 +200,7 @@ function PaymentQR({ orderId, total }: { orderId: string; total: number }) {
           </div>
           <div className="rounded-xl bg-white dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 px-3 py-2">
             <p className="text-[10px] font-semibold text-yellow-600 uppercase tracking-wide">Send To</p>
-            <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">ABDULLAH NASIR</p>
+            <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">DastarKhan</p>
             <p className="text-xs text-yellow-600 font-mono">*******3395 · Easypaisa</p>
           </div>
         </div>
@@ -208,7 +208,7 @@ function PaymentQR({ orderId, total }: { orderId: string; total: number }) {
 
       {/* Instructions */}
       <ol className="space-y-1 text-xs text-yellow-700 dark:text-yellow-300 list-decimal list-inside">
-        <li>QR scan karein ya number pe send karein: <strong>Rs. {total}</strong></li>
+        <li>QR scan karein ya number pe <strong>Rs. {total}</strong> DastarKhan ko send karein</li>
         <li>Payment ka screenshot lein</li>
         <li>Screenshot admin ko WhatsApp karein</li>
       </ol>
