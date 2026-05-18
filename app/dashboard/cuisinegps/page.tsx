@@ -77,7 +77,7 @@ export default function CuisineGPSPage() {
           return
         }
       } catch {
-        // Ignore permission query issues; fallback to prompt.
+        // Ignore permission query issues; fallback to prompt. ai handeling ke liye try-catch mein rakh diya hai.
       }
     }
 
